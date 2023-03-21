@@ -1,9 +1,13 @@
 const express = require("express");
 const router = express.Router();
 const jwt = require("jsonwebtoken");
-const User = require("../models/user");
-const { auth } = require("../middlewares/auth");
-const { getUserById, updateUserToken } = require("./utils");
+const User = require("../../models/user");
+const { auth } = require("../../middlewares/auth");
+const { getUserById, updateUserToken } = require("../utils");
+const gravatar = require("gravatar");
+const upload = require("../../middlewares/upload");
+
+const Jimp = require("jimp");
 
 require("dotenv").config();
 
@@ -38,6 +42,7 @@ router.post("/login", async (req, res, next) => {
     code: 200,
     data: {
       token,
+      avatar: user.avatarURL,
     },
   });
 });
@@ -45,7 +50,9 @@ router.post("/login", async (req, res, next) => {
 router.post("/signup", async (req, res, next) => {
   const { email, password } = req.body;
   const user = await User.findOne({ email });
-
+  const avatarURl = gravatar
+    .url(email, { s: "200", r: "pg", d: "404" })
+    .slice(2);
   if (user) {
     return res
       .json({
@@ -58,6 +65,7 @@ router.post("/signup", async (req, res, next) => {
   }
   try {
     const newUser = new User({ email });
+    newUser.setAvatar(avatarURl);
 
     newUser.setPassword(password);
     await newUser.save();
@@ -77,7 +85,6 @@ router.post("/signup", async (req, res, next) => {
 
 router.get("/logout", auth, async (req, res, next) => {
   const { _id: userId } = req.user;
-  console.log(req.user);
 
   await updateUserToken(userId, "");
   res.json({
@@ -92,7 +99,8 @@ router.get("/logout", auth, async (req, res, next) => {
 router.get("/current", auth, async (req, res, next) => {
   const { _id: userId } = req.user;
 
-  const { email, subscription } = await getUserById(userId);
+  const { email, subscription, avatarURL } = await getUserById(userId);
+  console.log(avatarURL);
 
   res.json({
     status: "success",
@@ -101,9 +109,34 @@ router.get("/current", auth, async (req, res, next) => {
       message: {
         email,
         subscription,
+        avatar: avatarURL,
       },
     },
   });
 });
 
+router.patch("/avatars", auth, upload.single("avatar"), async (req, res) => {
+  try {
+    const imagePath = req.file.path;
+    const image = await Jimp.read(imagePath);
+    image.resize(256, 256).quality(60);
+    const newFileName = "avatar-" + `${req.user.email}-` + Date.now() + ".jpg";
+    const newImagePath = "public/avatars/" + newFileName;
+    await image.writeAsync(newImagePath);
+
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user._id,
+      { $set: { avatarURL: newImagePath } },
+      { new: true }
+    );
+
+    res.status(200).json({
+      Status: 200,
+      avatarURL: updatedUser.avatarURL,
+      message: "Avatar has been updated ",
+    });
+  } catch (error) {
+    res.status(400).send(error);
+  }
+});
 module.exports = router;

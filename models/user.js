@@ -16,11 +16,18 @@ const userSchema = new mongoose.Schema({
     enum: ["starter", "pro", "business"],
     default: "starter",
   },
+
+  avatarURL: String,
+
   token: {
     type: String,
     default: null,
   },
 });
+
+userSchema.methods.setAvatar = function (avatarURL) {
+  this.avatarURL = avatarURL;
+};
 
 userSchema.methods.setPassword = function (password) {
   this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));
