@@ -115,7 +115,25 @@ router.get("/current", auth, async (req, res, next) => {
   });
 });
 
-router.get("/users/verify/:verificationToken", async (req, res) => {});
+router.get("/verify/:verificationToken", async (req, res) => {
+  const user = await User.findOne({
+    verificationToken: req.params.verificationToken,
+  });
+  console.log(user);
+  if (user) {
+    res.status(200).json({
+      Status: 200,
+
+      message: "Verification successful",
+    });
+  } else {
+    res.status(404).json({
+      Status: 404,
+
+      message: "User not found",
+    });
+  }
+});
 
 router.patch("/avatars", auth, upload.single("avatar"), async (req, res) => {
   try {

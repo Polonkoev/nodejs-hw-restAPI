@@ -1,15 +1,30 @@
-const mailgun = require("mailgun-js");
-// const DOMAIN = process.env.DOMAIN;
-const mg = mailgun({
-  apiKey: process.env.API_KEY,
-  domain: process.env.DOMAIN,
+
+const nodemailer = require("nodemailer");
+require("dotenv").config();
+
+const transporter = nodemailer.createTransport({
+  host: "smtp.mail.ru",
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL,
+    pass: process.env.PASSWORD,
+  },
 });
-const data = {
-  from: "nodeexpress2023@gmail.com",
-  to: "polonkoev.temerlan@gmail.com",
-  subject: "Hello",
-  text: "Testing some Mailgun awesomness!",
+
+
+
+const mailOptions = {
+  from: "xottabych06@mail.ru", // sender address
+  to: "tamer069326@gmail.com", // list of receivers
+  subject: "Confirm your email", // Subject line
+  text: `email verification code ${}`, // plain text body
 };
-mg.messages().send(data, function (error, body) {
-  console.log(body, error);
+
+// send mail with defined transport object
+transporter.sendMail(mailOptions, (error, info) => {
+  if (error) {
+    return console.log(error);
+  }
+  console.log("Message sent: %s", info.messageId);
 });
