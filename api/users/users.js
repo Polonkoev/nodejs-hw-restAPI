@@ -115,6 +115,8 @@ router.get("/current", auth, async (req, res, next) => {
   });
 });
 
+router.get("/users/verify/:verificationToken", async (req, res) => {});
+
 router.patch("/avatars", auth, upload.single("avatar"), async (req, res) => {
   try {
     const imagePath = req.file.path;
