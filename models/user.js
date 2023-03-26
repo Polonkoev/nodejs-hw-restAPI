@@ -36,6 +36,12 @@ const userSchema = new mongoose.Schema({
 userSchema.methods.setAvatar = function (avatarURL) {
   this.avatarURL = avatarURL;
 };
+userSchema.methods.setVerifiToken = function (verificationToken) {
+  this.verificationToken = verificationToken;
+};
+userSchema.methods.setVerify = function (verify) {
+  this.verify = verify;
+};
 
 userSchema.methods.setPassword = function (password) {
   this.password = bCrypt.hashSync(password, bCrypt.genSaltSync(6));

@@ -6,6 +6,8 @@ const { auth } = require("../../middlewares/auth");
 const { getUserById, updateUserToken } = require("../utils");
 const gravatar = require("gravatar");
 const upload = require("../../middlewares/upload");
+const verifyKey = require("../../utils/randomKey");
+const sendMail = require("../../utils/sendMail");
 
 const Jimp = require("jimp");
 
@@ -23,6 +25,16 @@ router.post("/login", async (req, res, next) => {
         status: "error",
         code: 400,
         message: "Incorrect login or password",
+        data: "Bad request",
+      })
+      .status(400);
+  }
+  if (user.verify !== true) {
+    return res
+      .json({
+        status: "error",
+        code: 400,
+        message: "Confirm your email",
         data: "Bad request",
       })
       .status(400);
@@ -65,6 +77,10 @@ router.post("/signup", async (req, res, next) => {
   }
   try {
     const newUser = new User({ email });
+    const code = verifyKey;
+    sendMail(email, code);
+    newUser.setVerifiToken(code);
+
     newUser.setAvatar(avatarURl);
 
     newUser.setPassword(password);
@@ -119,8 +135,11 @@ router.get("/verify/:verificationToken", async (req, res) => {
   const user = await User.findOne({
     verificationToken: req.params.verificationToken,
   });
-  console.log(user);
+
   if (user) {
+    user.setVerifiToken("null");
+    user.setVerify(true);
+    await user.save();
     res.status(200).json({
       Status: 200,
 
@@ -133,6 +152,31 @@ router.get("/verify/:verificationToken", async (req, res) => {
       message: "User not found",
     });
   }
+});
+
+router.post("/verify/", async (req, res) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({
+      message: "missing required field email",
+    });
+  }
+  const user = await User.findOne({ email });
+  if (!user) {
+    return res.status(404).json({
+      message: "User not found",
+    });
+  }
+
+  if (user.verify) {
+    return res.status(400).json({
+      message: "Verification has already been passed",
+    });
+  }
+  sendMail(email, user.verificationToken);
+  res.status(200).json({
+    message: "Verification email sent",
+  });
 });
 
 router.patch("/avatars", auth, upload.single("avatar"), async (req, res) => {

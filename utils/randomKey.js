@@ -1,11 +1,11 @@
-function generateRandomCode(length) {
+function generateRandomCode() {
   let result = "";
   const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < length; i++) {
+  for (let i = 0; i < 6; i++) {
     result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
   return result;
 }
 
-console.log(generateRandomCode(6));
+module.exports = generateRandomCode();
