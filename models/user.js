@@ -23,10 +23,24 @@ const userSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  verify: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    required: [true, "Verify token is required"],
+  },
 });
 
 userSchema.methods.setAvatar = function (avatarURL) {
   this.avatarURL = avatarURL;
+};
+userSchema.methods.setVerifiToken = function (verificationToken) {
+  this.verificationToken = verificationToken;
+};
+userSchema.methods.setVerify = function (verify) {
+  this.verify = verify;
 };
 
 userSchema.methods.setPassword = function (password) {
